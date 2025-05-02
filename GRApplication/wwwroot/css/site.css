@@ -1,0 +1,22 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+/* Add this rule to the <style> block or site.css */
+.items-table-container .table-responsive {
+    margin-bottom: 1rem; /* Add space below the table */
+}

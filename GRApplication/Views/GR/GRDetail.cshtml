@@ -1,0 +1,320 @@
+﻿@* ================================================================ *@
+@* File: Views/GR/GRDetail.cshtml                                   *@
+@* ================================================================ *@
+@model GRApplication.Models.GoodReceipt
+@using GRApplication.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = $"Details for GR {Model.Id}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string GetStatusInputClass(GRStatus status)
+    {
+        return status switch
+        {
+            GRStatus.Synced => "status-input-synced",
+            GRStatus.Failed => "status-input-failed",
+            GRStatus.Archived => "status-input-archived",
+            _ => "status-input-unsynced"
+        };
+    }
+}
+
+@section Styles {
+    <style>
+        /* Styles for the Status Input Backgrounds */
+        .status-input {
+            font-weight: 600;
+        }
+
+        .status-input-synced {
+            background-color: #d1e7dd !important;
+            color: #0f5132 !important;
+            border-color: #badbcc !important;
+        }
+
+        .status-input-failed {
+            background-color: #f8d7da !important;
+            color: #58151c !important;
+            border-color: #f1aeb5 !important;
+        }
+
+        .status-input-unsynced {
+            background-color: #e2e3e5 !important;
+            color: #41464b !important;
+            border-color: #d3d6d8 !important;
+        }
+
+        .status-input-archived {
+            background-color: #f7f7f7 !important;
+            color: #555 !important;
+            border-color: #ddd !important;
+        }
+
+        .status-input:disabled {
+            opacity: 0.95;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .btn i.fas {
+            margin-right: 6px;
+        }
+
+        /* Items Table Styles */
+        .items-table-container {
+            padding: 1rem 0 0 0;
+        }
+
+        .items-table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 0 0.5rem;
+        }
+
+        .items-table-controls-left, .items-table-controls-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .items-table-controls-right {
+            margin-left: auto;
+        }
+
+        .items-entries-dropdown, .items-search-input {
+            width: auto;
+            display: inline-block;
+            font-size: 0.875rem;
+        }
+
+        #itemsEntries {
+            max-width: 70px;
+        }
+
+        .items-table th {
+            font-weight: 600;
+            font-size: 0.85em;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .items-table td {
+            vertical-align: middle;
+            font-size: 0.9em;
+        }
+
+        .items-table-actions {
+            text-align: center;
+            width: 90px;
+        }
+        /* Slightly wider for icon+text */
+        .items-pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            font-size: 0.9em;
+            color: #6c757d;
+            padding: 0 0.5rem;
+        }
+
+        /* Specific style to try and fix item button appearance */
+        .items-table .btn-update-item {
+            min-width: 75px; /* Ensure minimum width */
+            padding: 0.25rem 0.5rem !important; /* Force padding */
+            font-size: 0.8em !important; /* Force font size */
+            line-height: 1.5; /* Ensure text line height */
+            text-align: center;
+            vertical-align: middle;
+            display: inline-flex; /* Helps align icon and text */
+            align-items: center;
+            justify-content: center;
+        }
+
+            .items-table .btn-update-item i {
+                margin-right: 4px; /* Space between icon and text */
+                line-height: 1; /* Align icon better */
+            }
+
+        /* Update Item Card */
+        #updateItemCard .card-title {
+            font-size: 1.1rem;
+        }
+
+        #updateItemCard label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Back Button */
+        .back-button-container {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+    </style>
+}
+
+@* --- Success Message Display --- *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">@TempData["SuccessMessage"]<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>
+}
+
+@* ================================================================ *@
+@* UPDATE GOOD RECEIPT SECTION                              *@
+@* ================================================================ *@
+<div class="card card-outline card-primary mb-4">
+    <div class="card-header"> <h3 class="card-title"><i class="fas fa-edit mr-2"></i>Update Good Receipt</h3> </div>
+    <form id="updateGRForm" asp-controller="GR" asp-action="UpdateGR" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" /> <input type="hidden" asp-for="VectorGRId" />
+        <input type="hidden" asp-for="OrderNumber" /> <input type="hidden" asp-for="DocumentDate" />
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    @* Column 1 *@
+                    <div class="form-group"> <label>Status</label> <input type="text" class="form-control status-input @GetStatusInputClass(Model.UploadStatus)" value="@Model.UploadStatus.ToString()" disabled /> </div>
+                    <div class="form-group"> <label>GR ID</label> <input type="text" class="form-control" value="@Model.Id" disabled /> </div>
+                    <div class="form-group"> <label>Vector GR ID</label> <input type="text" class="form-control" value="@Model.VectorGRId" disabled /> </div>
+                    <div class="form-group"> <label asp-for="OrderNumber">PO Number</label> <input asp-for="OrderNumber" class="form-control" disabled /> </div>
+                </div>
+                <div class="col-md-6">
+                    @* Column 2 *@
+                    <div class="form-group"> <label asp-for="DocumentDate">Document Date</label> <input type="text" class="form-control" value="@Model.DocumentDate.ToString("yyyy-MM-dd")" disabled /> </div>
+                    <div class="form-group"> <label asp-for="DocumentDueDate">Delivery/Due Date</label> <input asp-for="DocumentDueDate" type="date" class="form-control" asp-format="{0:yyyy-MM-dd}" /> <span asp-validation-for="DocumentDueDate" class="text-danger"></span> </div>
+                    <div class="form-group"> <label asp-for="SupplierCode">Supplier Code</label> <input asp-for="SupplierCode" class="form-control" /> <span asp-validation-for="SupplierCode" class="text-danger"></span> </div>
+                    <div class="form-group"> <label asp-for="SupplierName">Supplier Name</label> <input asp-for="SupplierName" class="form-control" /> <span asp-validation-for="SupplierName" class="text-danger"></span> </div>
+                </div>
+            </div>
+            <div class="button-container">
+                <button type="button" id="btnDeleteGR" class="btn btn-danger" onclick="confirmDeleteGR(@Model.Id)"> <i class="fas fa-trash-alt"></i> Delete GR </button>
+                <button type="submit" id="btnUpdateGR" class="btn btn-primary"> <i class="fas fa-save"></i> Update GR </button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorDetails))
+            {
+                <hr class="mt-4" /> <div class="mt-3"> <h5><i class="icon fas fa-exclamation-triangle text-danger mr-2"></i> Error Details</h5> <div class="alert alert-danger py-2"> <ul class="mb-0"> @foreach (var error in Model.ErrorDetails.Split(new[] { '*' }, StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <li>@error.Trim()</li>
+                            } </ul> </div> </div>
+            }
+        </div>
+    </form>
+    <form id="deleteGRForm_@Model.Id" asp-controller="GR" asp-action="DeleteGR" method="post" class="d-none"> @Html.AntiForgeryToken() <input type="hidden" name="id" value="@Model.Id" /> </form>
+</div>
+
+
+@* ================================================================ *@
+@* GOODS RECEIPT ITEMS SECTION                      *@
+@* ================================================================ *@
+<div class="card card-outline card-secondary mb-4">
+    <div class="card-header"> <h3 class="card-title"><i class="fas fa-list mr-2"></i>Goods Receipt Items</h3> </div>
+    <div class="card-body items-table-container">
+        <div class="items-table-controls">
+            @* Table Controls *@
+            <div class="items-table-controls-left"> <label for="itemsEntries" class="col-form-label col-form-label-sm me-1 mb-0">Show</label> <select id="itemsEntries" class="form-select form-select-sm items-entries-dropdown"> <option selected>10</option> <option>25</option> <option>50</option> <option>100</option> </select> <span class="ms-1">entries</span> </div>
+            <div class="items-table-controls-right"> <div class="input-group input-group-sm items-search-input"> <input type="search" id="itemsSearchInput" class="form-control form-control-sm" placeholder="Search items..."> <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button> </div> </div>
+        </div>
+
+        @* --- Items Table --- *@
+        <div class="table-responsive mt-3 mb-4">
+            @* **** INCREASED BOTTOM MARGIN HERE (mb-4) **** *@
+            <table class="table table-bordered table-hover items-table">
+                <thead class="thead-light"> <tr> <th>Prod Code</th> <th>Product Name</th> <th>Unit Size</th> <th>Cat No</th> <th>Unit Price</th> <th>Qty</th> <th>Amount Paid</th> <th class="items-table-actions">Action</th> </tr> </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductCode</td>
+                                <td>@item.ProductName</td>
+                                <td>@item.UnitSize</td>
+                                <td>@item.CatalogueNumber</td>
+                                <td class="text-right">@item.UnitPrice.ToString("N2")</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-right">@item.AmountPaid.ToString("N2")</td>
+                                <td class="items-table-actions">
+                                    @* ** RE-CHECK THIS BUTTON HTML ** *@
+                                    <button type="button" class="btn btn-info btn-sm btn-update-item"
+                                            data-item-id="@item.Id" data-product-code="@item.ProductCode"
+                                            data-product-name="@item.ProductName" data-catalogue-number="@item.CatalogueNumber">
+                                        <i class="fas fa-pencil-alt"></i> Update @* Ensure Text is Present *@
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="8" class="text-center">No items found for this receipt.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @* --- Items Table Footer/Pagination --- *@
+        <div class="items-pagination-container mt-3">
+            <div> Showing 1 to @(Model.Items?.Count ?? 0) of @(Model.Items?.Count ?? 0) entries </div>
+            <div> <nav><ul class="pagination pagination-sm mb-0"> <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li> <li class="page-item active"><a class="page-link" href="#">1</a></li> <li class="page-item"><a class="page-link" href="#">Next</a></li> </ul></nav> </div>
+        </div>
+
+    </div>
+</div> @* ================================================================ *@
+@* UPDATE ITEM SECTION (Hidden Card)                *@
+@* ================================================================ *@
+<div class="card card-outline card-info mb-4" id="updateItemCard" style="display: none;">
+    <div class="card-header"> <h5 class="card-title" id="updateItemTitle"><i class="fas fa-pencil-alt mr-2"></i>Update Item</h5> <div class="card-tools"> <button type="button" class="btn btn-tool" onclick="$('#updateItemCard').slideUp();"> <i class="fas fa-times"></i> </button> </div> </div>
+    <div class="card-body">
+        <input type="hidden" id="updateItemId" name="UpdateItemId" />
+        <div class="row">
+            <div class="col-md-4"> <div class="form-group"> <label for="updateProductCode">Product Code</label> <input type="text" id="updateProductCode" name="UpdateProductCode" class="form-control" /> </div> </div>
+            <div class="col-md-4"> <div class="form-group"> <label for="updateProductName">Product Name</label> <input type="text" id="updateProductName" name="UpdateProductName" class="form-control" /> </div> </div>
+            <div class="col-md-4"> <div class="form-group"> <label for="updateCatalogueNumber">Catalogue Number</label> <input type="text" id="updateCatalogueNumber" name="UpdateCatalogueNumber" class="form-control" /> </div> </div>
+        </div>
+        <div class="button-container mt-2">
+            <button type="button" id="btnDeleteItem" class="btn btn-danger"> <i class="fas fa-trash-alt"></i> Delete Item </button>
+            <button type="button" id="btnUpdateItem" class="btn btn-info"> <i class="fas fa-check"></i> Update Item </button>
+        </div>
+    </div>
+</div> @* --- Link back to the list page --- *@
+<div class="back-button-container">
+    <a asp-controller="GR" asp-action="GR" class="btn btn-secondary"> <i class="fas fa-arrow-left"></i> Back to List </a>
+</div>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function confirmDeleteGR(grId) { if (confirm('Are you sure you want to delete Goods Receipt ID ' + grId + '?')) { document.getElementById('deleteGRForm_' + grId).submit(); } }
+        $(document).ready(function () {
+            // Click handler for update item button
+            $('.btn-update-item').on('click', function (e) { e.preventDefault(); console.log("Update item button clicked!"); var button = $(this); var itemId = button.data('item-id'); var productCode = button.data('product-code'); var productName = button.data('product-name'); var catalogueNumber = button.data('catalogue-number'); console.log("Read Data - Item ID:", itemId, "Code:", productCode, "Name:", productName, "Cat#:", catalogueNumber); $('#updateItemId').val(itemId); $('#updateProductCode').val(productCode); $('#updateProductName').val(productName); $('#updateCatalogueNumber').val(catalogueNumber); console.log("Populated hidden ID:", $('#updateItemId').val()); console.log("Checking if #updateItemCard exists:", $('#updateItemCard').length); $('#updateItemTitle').text('Update ' + productName); console.log("Attempting to slideDown #updateItemCard"); $('#updateItemCard').slideDown(function() { console.log("#updateItemCard slideDown animation complete."); }); console.log("Attempting to scroll."); $('html, body').animate({ scrollTop: $('#updateItemCard').offset().top - 70 }, 500); });
+            // Placeholder click handlers
+            $('#btnDeleteItem').on('click', function() { var itemId = $('#updateItemId').val(); if (itemId && confirm('Are you sure you want to delete item ID ' + itemId + '?')) { alert('Item deletion logic for ID ' + itemId + ' goes here.'); $('#updateItemCard').slideUp(); } });
+            $('#btnUpdateItem').on('click', function() { var itemId = $('#updateItemId').val(); var productCode = $('#updateProductCode').val(); var productName = $('#updateProductName').val(); var catalogueNumber = $('#updateCatalogueNumber').val(); if (itemId) { alert('Item update logic for ID ' + itemId + ' goes here.\nNew Code: ' + productCode + '\nNew Name: ' + productName + '\nNew Cat#: ' + catalogueNumber); $('#updateItemCard').slideUp(); } });
+            console.log("Click handlers attached.");
+        });
+    </script>
+ }

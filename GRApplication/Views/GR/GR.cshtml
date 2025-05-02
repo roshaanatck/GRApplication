@@ -1,0 +1,320 @@
+﻿@* File: Views/GR/GR.cshtml *@
+@model IEnumerable<GRApplication.Models.GoodReceipt>
+@using GRApplication.Models // Needed for GRStatus enum access
+@* Add tag helper directive if not in _ViewImports.cshtml *@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Manage Goods Receipts"; // Changed Title
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Ensure Layout is specified
+
+    // Safely calculate total entries, defaulting to 0 if Model is null
+    var totalEntries = Model?.Count() ?? 0;
+
+    // --- Placeholder variables for pagination/display ---
+    // TODO: Replace these with actual values from pagination logic later
+    var entriesToShow = 10; // Example value from dropdown
+    var currentPage = 1; // Example current page
+    var startEntry = totalEntries > 0 ? ((currentPage - 1) * entriesToShow) + 1 : 0;
+    var endEntry = Math.Min(currentPage * entriesToShow, totalEntries);
+    // --- End Placeholder variables ---
+}
+
+@* Custom CSS to match the screenshot style - Consider moving to a separate CSS file later *@
+<style>
+    body {
+        background-color: #f8f9fa; /* Light gray background */
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+        color: #495057; /* Darker gray text */
+    }
+
+    .status-tag {
+        background-color: #28a745; /* Green background */
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+        display: inline-flex; /* Use flex for alignment */
+        align-items: center; /* Center items vertically */
+    }
+
+        /* Basic checkmark using CSS borders */
+        .status-tag::before {
+            content: '';
+            display: inline-block;
+            transform: rotate(45deg);
+            height: 10px;
+            width: 5px;
+            border-bottom: 2px solid white;
+            border-right: 2px solid white;
+            margin-right: 6px; /* Space between check and text */
+            margin-bottom: 2px; /* Adjust vertical position */
+        }
+
+    .table-container {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.3rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border: 1px solid #dee2e6; /* Light border */
+    }
+
+    .status-legend span {
+        margin-right: 15px;
+        font-size: 0.9em;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .status-dot {
+        height: 12px;
+        width: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        vertical-align: middle; /* Align dot with text */
+    }
+
+    .status-synced {
+        background-color: #28a745;
+    }
+    /* Green */
+    .status-unsynced {
+        background-color: #adb5bd;
+    }
+    /* Gray */
+    .status-failed {
+        background-color: #dc3545;
+    }
+    /* Red */
+
+    .table-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        gap: 1rem; /* Add gap between wrapped items */
+    }
+
+    .table-controls-left, .table-controls-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem; /* Space between elements */
+    }
+
+    .table-controls-right {
+        margin-left: auto; /* Push search to the right */
+    }
+
+    .entries-dropdown {
+        width: auto; /* Adjust width as needed */
+        display: inline-block; /* Allow label alignment */
+    }
+
+    .search-input {
+        width: auto; /* Or fixed width e.g., 200px */
+        display: inline-block;
+    }
+
+    .table th {
+        font-weight: 600; /* Bolder headers */
+        font-size: 0.9em;
+        background-color: #f8f9fa; /* Light header background */
+        vertical-align: middle;
+    }
+
+    .table td {
+        vertical-align: middle; /* Center content vertically */
+        font-size: 0.9em;
+    }
+
+    .table-actions {
+        text-align: center; /* Center action button */
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        font-size: 0.9em;
+        color: #6c757d; /* Gray text */
+    }
+
+    /* Style for action buttons */
+    .btn-refresh { /* Blue outline like image */
+        color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+        .btn-refresh:hover {
+            color: white;
+            background-color: #0d6efd;
+        }
+
+    .btn-reupload { /* Green solid like image */
+        background-color: #198754;
+        border-color: #198754;
+        color: white;
+    }
+
+        .btn-reupload:hover {
+            background-color: #157347;
+            border-color: #146c43;
+            color: white;
+        }
+
+    .btn-view-details { /* Blue solid button in table */
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8em;
+    }
+
+</style>
+
+@* --- Page Header --- *@
+<div class="page-header">
+    <h1 class="page-title">@ViewData["Title"]</h1>
+    <span class="status-tag">
+        @* Placeholder text/status indicator *@
+        @* Checkmark is added via CSS ::before pseudo-element *@
+        GR List Updated @* Updated Text *@
+    </span>
+</div>
+
+@* --- Main Table Container --- *@
+<div class="table-container">
+
+    @* --- Top Section: Title & Legend --- *@
+    <div>
+        <h5>Available Goods Receipts</h5>
+        <div class="status-legend mb-3">
+            <span><span class="status-dot status-unsynced"></span>Unsynced</span>
+            <span><span class="status-dot status-synced"></span>Synced</span>
+            <span><span class="status-dot status-failed"></span>Failed</span>
+        </div>
+    </div>
+
+    @* --- Middle Section: Action Buttons (Placeholder functionality) --- *@
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <button type="button" class="btn btn-refresh">
+            @* TODO: Add icon if desired (e.g., using Font Awesome <i class="fas fa-sync-alt"></i>) *@
+            Refresh GR List @* Updated Text *@
+        </button>
+        <button type="button" class="btn btn-reupload">
+            @* TODO: Add icon if desired (e.g., <i class="fas fa-upload"></i>) *@
+            Reupload Receipts @* Updated Text *@
+        </button>
+    </div>
+
+    @* --- Table Controls: Entries Dropdown & Search (Placeholder functionality) --- *@
+    <div class="table-controls">
+        <div class="table-controls-left">
+            <label for="entries" class="col-form-label col-form-label-sm me-1">Show</label>
+            <select id="entries" class="form-select form-select-sm entries-dropdown">
+                <option selected>10</option>
+                <option>25</option>
+                <option>50</option>
+                <option>100</option>
+            </select>
+            <span class="ms-1">entries</span>
+        </div>
+        <div class="table-controls-right">
+            <label for="searchInput" class="col-form-label col-form-label-sm me-1">Search:</label>
+            <input type="search" id="searchInput" class="form-control form-control-sm search-input" placeholder="">
+        </div>
+    </div>
+
+    @* --- Data Table --- *@
+    <div class="table-responsive">
+        @* Make table scroll horizontally on small screens *@
+        <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+                @* Light header background *@
+                <tr>
+                    <th>Upload Status</th>
+                    <th>PO Number</th>
+                    <th>Vector GR ID</th>
+                    <th>Supplier Code</th>
+                    <th>Supplier Name</th>
+                    <th>Doc Date</th>
+                    <th>Doc Due Date</th>
+                    <th class="text-center">Action</th> @* Centered Action header *@
+                </tr>
+            </thead>
+            <tbody>
+                @* Safely iterate through the Model, checking for null first *@
+                @if (Model != null && Model.Any())
+                {
+                    @* The .Take(entriesToShow) is just for dummy display based on hardcoded value above *@
+                    @* TODO: Replace .Take() with proper pagination logic (e.g., using Skip/Take based on current page) *@
+                    @foreach (var item in Model.Take(entriesToShow))
+                    {
+                        string statusClass = item.UploadStatus switch
+                        {
+                            GRStatus.Synced => "status-synced",
+                            GRStatus.Unsynced => "status-unsynced",
+                            GRStatus.Failed => "status-failed",
+                            _ => "status-unsynced" // Default case
+                        };
+
+                        <tr>
+                            <td class="text-center"><span class="status-dot @statusClass"></span></td>
+                            <td>@item.OrderNumber</td>
+                            <td>@item.VectorGRId</td>
+                            <td>@item.SupplierCode</td>
+                            <td>@item.SupplierName</td>
+                            <td>@item.DocumentDate.ToString("dd/MM/yyyy")</td> @* Format date as in image *@
+                            <td>@item.DocumentDueDate.ToString("dd/MM/yyyy")</td> @* Format date as in image *@
+                            <td class="table-actions">
+                                @* **FIXED**: Link to the GRDetail action, passing the item's Id *@
+                                <a asp-controller="GR" asp-action="GRDetail" asp-route-id="@item.Id" class="btn btn-primary btn-sm btn-view-details">View</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else // Handle case where Model is null or empty
+                {
+                    <tr>
+                        <td colspan="8" class="text-center">No Goods Receipts found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* --- Table Footer: Entry Count & Pagination (Placeholder functionality) --- *@
+    <div class="pagination-container">
+        <div>
+            Showing @startEntry to @endEntry of @totalEntries entries @* Updated Placeholder text *@
+        </div>
+        <div>
+            @* TODO: Replace with real pagination controls later *@
+            <nav aria-label="Page navigation example">
+                <ul class="pagination pagination-sm mb-0">
+                    @* Smaller pagination, remove bottom margin *@
+                    <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+</div> @* End of table-container *@
+
+@* No page-specific scripts needed for this basic display version *@
+@* @section Scripts { } *@

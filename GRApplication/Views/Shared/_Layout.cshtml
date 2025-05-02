@@ -1,0 +1,105 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"] - GRApplication</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    @* <link rel="stylesheet" href="~/lib/fontawesome-free/css/all.min.css"> *@
+    @* <link rel="stylesheet" href="~/lib/overlayScrollbars/styles/overlayscrollbars.css"> *@ <link rel="stylesheet" href="~/lib/admin-lte/css/adminlte.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    @* Icon Removed - Text/Symbol can be used if needed, or leave as is for AdminLTE JS to handle *@
+                    <a class="nav-link" data-widget="pushmenu" href="#" role="button">☰</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a asp-controller="GR" asp-action="GR" class="nav-link">Home</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    @* Icon Removed - Text can be used if needed *@
+                    <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+                        [ ] @* Placeholder for fullscreen icon *@
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <a asp-controller="GR" asp-action="GR" class="brand-link">
+                <span class="brand-text font-weight-light">GRApplication</span>
+            </a>
+
+            <div class="sidebar">
+                <nav class="mt-2">
+                    @* --- TEMPORARY BASIC MENU (Icons Removed) --- *@
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <li class="nav-item">
+                            <a asp-controller="GR" asp-action="GR" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "GR" ? "active" : "")">
+                                @* <i class="nav-icon fas fa-list"></i> *@ @* Icon Removed *@
+                                <p>GR List</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a asp-controller="Home" asp-action="Privacy" class="nav-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Privacy" ? "active" : "")">
+                                @* <i class="nav-icon fas fa-lock"></i> *@ @* Icon Removed *@
+                                <p>Privacy</p>
+                            </a>
+                        </li>
+                    </ul>
+                    @* --- END TEMPORARY MENU --- *@
+                </nav>
+            </div>
+        </aside>
+
+        <div class="content-wrapper">
+            <div class="content-header">
+                <div class="container-fluid">
+                    <div class="row mb-2">
+                        <div class="col-sm-6">
+                            <h1 class="m-0">@ViewData["Title"]</h1>
+                        </div>
+                        <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                                <li class="breadcrumb-item"><a asp-controller="GR" asp-action="GR">Home</a></li>
+                                <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <section class="content">
+                <div class="container-fluid">
+                    @RenderBody()
+                </div>
+            </section>
+        </div>
+        <footer class="main-footer">
+            <strong>Copyright &copy; @DateTime.Now.Year <a href="#">GRApplication</a>.</strong>
+            All rights reserved.
+            <div class="float-right d-none d-sm-inline-block"> <b>Version</b> 1.0.0 </div>
+        </footer>
+
+    </div>
+    <script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> @* <script src="~/lib/overlayScrollbars/browser/overlayscrollbars.browser.es5.js"></script> *@ <script src="~/lib/admin-lte/js/adminlte.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>
